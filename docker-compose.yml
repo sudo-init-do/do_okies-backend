@@ -1,12 +1,10 @@
-version: "3.9"
-
+# docker-compose.yml  (top-level "version:" removed)
 services:
   postgres:
     image: postgres:16
     container_name: okies_postgres
     restart: always
-    env_file:
-      - .env
+    env_file: .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -30,7 +28,7 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
-      timeout: 5s
+      timeout: 3s
       retries: 5
 
   api:
@@ -38,21 +36,14 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: okies_api
-    restart: always
-    env_file:
-      - .env
+    env_file: .env
     depends_on:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
+        condition: service_started
     ports:
       - "8081:8081"
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 volumes:
   pgdata:

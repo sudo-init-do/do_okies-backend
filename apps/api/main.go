@@ -39,7 +39,7 @@ func main() {
 	pool := mydb.MustOpen(ctx, cfg.DatabaseURL)
 	defer pool.Close()
 
-	// --- Redis (optional)
+	// --- Redis 
 	var rdb *redis.Client
 	rc := redis.NewClient(&redis.Options{Addr: cfg.RedisAddr})
 	if err := rc.Ping(ctx).Err(); err != nil {

@@ -1,8 +1,16 @@
-run:
-	go run ./apps/api
+.PHONY: up down logs rebuild api dbshell
 
-dc-up:
-	docker compose -f infra/docker/docker-compose.yml up --build
+up:
+\tdocker compose up -d
 
-dc-down:
-	docker compose -f infra/docker/docker-compose.yml down
+down:
+\tdocker compose down
+
+rebuild:
+\tdocker compose build api && docker compose up -d api
+
+logs:
+\tdocker compose logs -f api
+
+dbshell:
+\tdocker compose exec -it postgres psql -U okies -d okiesdb
