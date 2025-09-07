@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1.7
+
+############ Build ############
+FROM --platform=$BUILDPLATFORM golang:1.24.4 AS build
+WORKDIR /src
+ENV CGO_ENABLED=0
+ENV GOTOOLCHAIN=auto
+
+# Cache deps
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+# Copy source & build
+COPY . .
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -trimpath -ldflags="-s -w" -o /out/api ./apps/api
+
+############ Run ############
+FROM gcr.io/distroless/base-debian12:nonroot
+WORKDIR /srv
+COPY --from=build /out/api /srv/api
+EXPOSE 8081
+ENTRYPOINT ["/srv/api"]

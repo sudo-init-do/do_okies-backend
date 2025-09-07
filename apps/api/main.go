@@ -14,6 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 
+	"github.com/sudo-init-do/okies-backend/pkg/auth"
 	mycfg "github.com/sudo-init-do/okies-backend/pkg/config"
 	mydb "github.com/sudo-init-do/okies-backend/pkg/db"
 	mylog "github.com/sudo-init-do/okies-backend/pkg/logger"
@@ -69,6 +70,20 @@ func main() {
 	})
 	r.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ready"))
+	})
+
+	// --- Auth routes 
+	authHandler := auth.NewHandler(pool)
+	r.Post("/auth/signup", authHandler.Signup)
+	r.Post("/auth/login", authHandler.Login)
+
+	r.Group(func(protected chi.Router) {
+		protected.Use(auth.JWTMiddleware)
+		protected.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+			userID := r.Context().Value("user_id")
+			role := r.Context().Value("role")
+			_, _ = w.Write([]byte(fmt.Sprintf("user_id=%v, role=%v", userID, role)))
+		})
 	})
 
 	// --- HTTP server with timeouts

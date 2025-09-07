@@ -1,16 +1,32 @@
 package util
 
 import (
-	"encoding/json"
+	"bytes"
+	"io/ioutil"
 	"net/http"
 )
 
-func JSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
-}
+func HTTPPost(url string, body []byte, headers map[string]string) ([]byte, int, error) {
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, 0, err
+	}
 
-func Err(w http.ResponseWriter, code int, key string) {
-	JSON(w, code, map[string]string{"error": key})
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return respBody, resp.StatusCode, nil
 }

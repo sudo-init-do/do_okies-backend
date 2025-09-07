@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1.7
+
+FROM golang:1.24.4 AS dev
+WORKDIR /app
+
+# Speed up module downloads
+ENV GO111MODULE=on
+ENV GOTOOLCHAIN=auto
+
+# Install Air for hot reload
+RUN go install github.com/cosmtrek/air@v1.49.0
+
+# Pre-cache modules
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod go mod download
+
+# Copy the whole repo (but in compose we will bind mount to override)
+COPY . .
+
+# Default command: Air watches and rebuilds on changes
+CMD ["air", "-c", ".air.toml"]
